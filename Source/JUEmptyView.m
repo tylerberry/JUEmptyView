@@ -3,180 +3,148 @@
 //  JUEmptyView
 //
 //  Copyright (c) 2012 by Sidney Just
-//  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
-//  documentation files (the "Software"), to deal in the Software without restriction, including without limitation 
-//  the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, 
+//  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+//  documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
 //  and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 //  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//  PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE 
-//  FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+//  PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+//  FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 //  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
 #import "JUEmptyView.h"
 
 @implementation JUEmptyView
-@synthesize title, titleFont, titleColor, backgroundColor;
-@synthesize forceShow;
 
-#pragma mark -
-#pragma mark Setter
-
-- (void)setTitle:(NSString *)ttitle
+- (id) initWithFrame: (NSRect) frameRect
+               title: (NSString *) title
+                font: (NSFont *) font
+               color: (NSColor *) color
+     backgroundColor: (NSColor *) backgroundColor
 {
-    [title autorelease];
-    title = [ttitle copy];
+  if (!(self = [super initWithFrame: frameRect]))
+    return nil;
+  
+  _title = title ? [title copy] : @"Untitled";
+  _titleFont = font ? font : [NSFont boldSystemFontOfSize: [NSFont smallSystemFontSize]];
+  _titleColor = color ? color : [NSColor colorWithCalibratedRed: 0.890 green: 0.890 blue: 0.890 alpha: 1.0];
+  _backgroundColor = backgroundColor ? backgroundColor : [NSColor colorWithCalibratedRed: 0.588
+                                                                                   green: 0.588
+                                                                                    blue: 0.588
+                                                                                   alpha: 1.000];
+  
+  return self;
+}
+
+- (id) initWithFrame: (NSRect) frameRect
+{
+  return [self initWithFrame: frameRect title: nil font: nil color: nil backgroundColor: nil];
+}
+
+#pragma mark - Property method implementations
+
+- (void) setTitle: (NSString *) title
+{
+  _title = [title copy];
+  
+  [self setNeedsDisplay: YES];
+}
+
+- (void) setTitleFont: (NSFont *) titleFont
+{
+  _titleFont = titleFont;
+  
+  [self setNeedsDisplay: YES];
+}
+
+- (void) setTitleColor: (NSColor *) titleColor
+{
+  _titleColor = titleColor;
+  
+  [self setNeedsDisplay:YES];
+}
+
+- (void) setBackgroundColor: (NSColor *) backgroundColor
+{
+  _backgroundColor = backgroundColor;
+  
+  [self setNeedsDisplay: YES];
+}
+
+- (void) setForceShow: (BOOL) forceShow
+{
+  _forceShow = forceShow;
+  
+  [self setNeedsDisplay: YES];
+}
+
+#pragma mark - NSView overrides (Drawing)
+
+- (void) drawRect: (NSRect) dirtyRect
+{
+  if (_forceShow || self.subviews.count == 0)
+  {
+    NSRect rect = self.bounds;
+    NSSize size = [_title sizeWithAttributes: @{NSFontAttributeName: _titleFont}];
+    NSSize bezierSize = NSMakeSize (size.width + 40.0, size.height + 20.0);
+    NSRect drawRect;
     
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setTitleFont:(NSFont *)ttitleFont
-{
-    [titleFont autorelease];
-    titleFont = [ttitleFont retain];
+    // Background
+    drawRect = NSMakeRect (0.0, 0.0, bezierSize.width, bezierSize.height);
+    drawRect.origin.x = round ((rect.size.width * 0.5) - (bezierSize.width * 0.5));
+    drawRect.origin.y = round ((rect.size.height * 0.5) - (bezierSize.height * 0.5));
     
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setTitleColor:(NSColor *)ttitleColor
-{
-    [titleColor autorelease];
-    titleColor = [ttitleColor retain];
+    [_backgroundColor setFill];
+    [[NSBezierPath bezierPathWithRoundedRect: drawRect xRadius: 8.0 yRadius: 8.0] fill];
     
-    [self setNeedsDisplay:YES];
-}
-
-- (void)setBackgroundColor:(NSColor *)tbackgroundColor
-{
-    [backgroundColor autorelease];
-    backgroundColor = [tbackgroundColor retain];
+    // String
+    drawRect = NSMakeRect (0.0, 0.0, size.width, size.height);
+    drawRect.origin.x = round ((rect.size.width * 0.5) - (size.width * 0.5));
+    drawRect.origin.y = round ((rect.size.height * 0.5) - (size.height * 0.5));
     
-     [self setNeedsDisplay:YES];
+    [_title drawInRect: drawRect
+        withAttributes: @{NSForegroundColorAttributeName: _titleColor, NSFontAttributeName: _titleFont}];
+  }
 }
 
-- (void)setForceShow:(BOOL)tforceShow
+- (void) willRemoveSubview: (NSView *) subview
 {
-    forceShow = tforceShow;
-    
-    [self setNeedsDisplay:YES];
+  [super willRemoveSubview: subview];
+  [self setNeedsDisplay: YES];
 }
 
-#pragma mark -
-#pragma Drawing
-
-- (void)drawRect:(NSRect)dirtyRect
+- (void) didAddSubview: (NSView *) subview
 {
-    if(forceShow || [[self subviews] count] == 0)
-    {
-        NSRect rect = [self bounds];
-        NSSize size = [title sizeWithAttributes:[NSDictionary dictionaryWithObject:titleFont forKey:NSFontAttributeName]];
-        NSSize bezierSize = NSMakeSize(size.width + 40.0, size.height + 20.0);
-        NSRect drawRect;
-        
-        
-        // Background
-        drawRect = NSMakeRect(0.0, 0.0, bezierSize.width, bezierSize.height);
-        drawRect.origin.x = round((rect.size.width * 0.5) - (bezierSize.width * 0.5));
-        drawRect.origin.y = round((rect.size.height * 0.5) - (bezierSize.height * 0.5));
-        
-        [backgroundColor setFill];
-        [[NSBezierPath bezierPathWithRoundedRect:drawRect xRadius:8.0 yRadius:8.0] fill];
-        
-        
-        // String
-        drawRect = NSMakeRect(0.0, 0.0, size.width, size.height);
-        drawRect.origin.x = round((rect.size.width * 0.5) - (size.width * 0.5));
-        drawRect.origin.y = round((rect.size.height * 0.5) - (size.height * 0.5));
-        
-        [title drawInRect:drawRect withAttributes:[NSDictionary dictionaryWithObjectsAndKeys:titleColor, NSForegroundColorAttributeName, 
-                                                                                             titleFont, NSFontAttributeName, nil]];
-    }
+  [super didAddSubview: subview];
+  [self setNeedsDisplay: YES];
 }
 
+#pragma mark - NSCoding protocol
 
-- (void)willRemoveSubview:(NSView *)subview
+- (void) encodeWithCoder: (NSCoder *) encoder
 {
-    [super willRemoveSubview:subview];
-    [self setNeedsDisplay:YES];
+  [super encodeWithCoder: encoder];
+  
+  [encoder encodeObject: _title];
+  [encoder encodeObject: _titleFont];
+  [encoder encodeObject: _titleColor];
+  [encoder encodeObject: _backgroundColor];
 }
 
-- (void)didAddSubview:(NSView *)subview
+- (id) initWithCoder: (NSCoder *) decoder
 {
-    [super didAddSubview:subview];
-    [self setNeedsDisplay:YES];
-}
-
-#pragma mark -
-#pragma mark Constructor / Destructor
-
-- (void)constructWithTitle:(NSString *)ttitle font:(NSFont *)font color:(NSColor *)color andBackgroundColor:(NSColor *)tbackgroundColor
-{
-    title = ttitle ? [ttitle copy] : [[NSString alloc] initWithString:@"Untitled"];
-    titleFont = font ? [font retain] : [[NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]] retain];
-    titleColor = color ? [color retain] : [[NSColor colorWithCalibratedRed:0.890 green:0.890 blue:0.890 alpha:1.0] retain];
-    backgroundColor = tbackgroundColor ? [tbackgroundColor retain] : [[NSColor colorWithCalibratedRed:0.588 green:0.588 blue:0.588 alpha:1.000] retain];
-}
-
-- (id)initWithCoder:(NSCoder *)decoder
-{
-    if(self = [super initWithCoder:decoder])
-    {
-        [self constructWithTitle:nil font:nil color:nil andBackgroundColor:nil];
-    }
-    
-    return self;
-}
-
-- (id)initWithFrame:(NSRect)frameRect
-{
-    if(self = [super initWithFrame:frameRect])
-    {
-        [self constructWithTitle:nil font:nil color:nil andBackgroundColor:nil];
-    }
-    
-    return self;
-}
-
-- (id)initWithTitle:(NSString *)ttitle
-{
-    if((self = [super init]))
-    {
-        [self constructWithTitle:ttitle font:nil color:nil andBackgroundColor:nil];
-    }
-    
-    return self;
-}
-
-- (id)initWithTitle:(NSString *)ttitle andFont:(NSFont *)font
-{
-    if((self = [super init]))
-    {
-        [self constructWithTitle:ttitle font:font color:nil andBackgroundColor:nil];
-    }
-    
-    return self;
-}
-
-- (id)initWithTitle:(NSString *)ttitle font:(NSFont *)font color:(NSColor *)color andBackgroundColor:(NSColor *)tbackgroundColor
-{
-    if((self = [super init]))
-    {
-        [self constructWithTitle:ttitle font:font color:color andBackgroundColor:tbackgroundColor];
-    }
-    
-    return self;
-}
-
-- (void)dealloc
-{
-    [title release];
-    [titleFont release];
-    [titleColor release];
-    [backgroundColor release];
-    
-    [super dealloc];
+  if (!(self = [super initWithCoder: decoder]))
+    return nil;
+  
+  _title = [decoder decodeObject];
+  _titleFont = [decoder decodeObject];
+  _titleColor = [decoder decodeObject];
+  _backgroundColor = [decoder decodeObject];
+  
+  return self;
 }
 
 @end
