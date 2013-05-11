@@ -92,29 +92,31 @@
 
 - (void) drawRect: (NSRect) dirtyRect
 {
-  if (_forceShow || self.subviews.count == 0)
-  {
-    NSRect rect = self.bounds;
-    NSSize size = [_title sizeWithAttributes: @{NSFontAttributeName: _titleFont}];
-    NSSize bezierSize = NSMakeSize (size.width + 40.0, size.height + 20.0);
-    NSRect drawRect;
-    
-    // Background
-    drawRect = NSMakeRect (0.0, 0.0, bezierSize.width, bezierSize.height);
-    drawRect.origin.x = round ((rect.size.width * 0.5) - (bezierSize.width * 0.5));
-    drawRect.origin.y = round ((rect.size.height * 0.5) - (bezierSize.height * 0.5));
-    
-    [_backgroundColor setFill];
-    [[NSBezierPath bezierPathWithRoundedRect: drawRect xRadius: 8.0 yRadius: 8.0] fill];
-    
-    // String
-    drawRect = NSMakeRect (0.0, 0.0, size.width, size.height);
-    drawRect.origin.x = round ((rect.size.width * 0.5) - (size.width * 0.5));
-    drawRect.origin.y = round ((rect.size.height * 0.5) - (size.height * 0.5));
-    
-    [_title drawInRect: drawRect
-        withAttributes: @{NSForegroundColorAttributeName: _titleColor, NSFontAttributeName: _titleFont}];
-  }
+  [super drawRect: dirtyRect];
+  
+  if (!_forceShow && self.subviews.count > 0)
+    return;
+  
+  NSRect rect = self.bounds;
+  NSSize size = [_title sizeWithAttributes: @{NSFontAttributeName: _titleFont}];
+  NSSize bezierSize = NSMakeSize (size.width + 40.0, size.height + 20.0);
+  NSRect drawRect;
+  
+  // Background
+  drawRect = NSMakeRect (0.0, 0.0, bezierSize.width, bezierSize.height);
+  drawRect.origin.x = round ((rect.size.width * 0.5) - (bezierSize.width * 0.5));
+  drawRect.origin.y = round ((rect.size.height * 0.5) - (bezierSize.height * 0.5));
+  
+  [_backgroundColor setFill];
+  [[NSBezierPath bezierPathWithRoundedRect: drawRect xRadius: 8.0 yRadius: 8.0] fill];
+  
+  // String
+  drawRect = NSMakeRect (0.0, 0.0, size.width, size.height);
+  drawRect.origin.x = round ((rect.size.width * 0.5) - (size.width * 0.5));
+  drawRect.origin.y = round ((rect.size.height * 0.5) - (size.height * 0.5));
+  
+  [_title drawInRect: drawRect
+      withAttributes: @{NSForegroundColorAttributeName: _titleColor, NSFontAttributeName: _titleFont}];
 }
 
 - (void) willRemoveSubview: (NSView *) subview
@@ -147,9 +149,20 @@
     return nil;
   
   _title = [decoder decodeObject];
+  if (!_title)
+    _title = @"Untitled";
+  
   _titleFont = [decoder decodeObject];
+  if (!_titleFont)
+    _titleFont = [NSFont boldSystemFontOfSize: [NSFont smallSystemFontSize]];
+  
   _titleColor = [decoder decodeObject];
+  if (!_titleColor)
+    _titleColor = [NSColor colorWithCalibratedRed: 0.890 green: 0.890 blue: 0.890 alpha: 1.0];
+  
   _backgroundColor = [decoder decodeObject];
+  if (!_backgroundColor)
+    _backgroundColor = [NSColor colorWithCalibratedRed: 0.588 green: 0.588 blue: 0.588 alpha: 1.000];
   
   return self;
 }
